@@ -250,9 +250,51 @@ Eg:
 			Note: here in "music:detail", we are using "music" namespace
  
 
- ## Simple Form:
+## Simple Form:
  ---------------
+ 
+ steps to work with form in django:	
+ ----------------------------------
+ 1. create a form in template:
+ 
+ 	{% if error_message %}		------> added to check if there is any error while working for form in the backend
+ 		<p> {{error_message}} </p>
+ 	{% endif %}
+ 
+ 
+ 	<form action="{% url 'music:favorite' album.id %}" method="post">
+ 		{% csrf_token %}
+ 		{% for song in album.song_set.all %}
+ 			<input type="radio" id="song{{ forloop.counter }}" name="song" value="{{song.id}}">
+ 			<label for="song{{ forloop.counter }}">
+ 				{{song.song_title}}
+ 				{% if song.is_favourite %}
+ 					<img src="img.jpg">
+ 				{% endif %}
+ 			</label>
+ 		{% endfor %}
+ 		<input type="submit" value="Favorite">
+ 	</form>
  	
+ 2. Now create a view to handle this form in "views.py"
+ 	
+ 	from music.models import Album, Song
+ 	
+ 	def favourite(request, album_id):
+ 		album = get_object_or_404(Album, pk=album_id)
+ 		try:
+ 			selected_song = album.song_set.get(pk = request.POST['song'])	------> here we are fetching input value of form
+ 		except(KeyError, Song.DoesNotExist):
+ 			return render(request, 'music/detail.html', {
+ 				'album' : album,
+ 				'error_message' : "You did not select a valid song",
+ 			}) 
+ 		else:
+ 			select_song.is_favorite = True
+ 			selected_song.save()
+ 			return render(request, 'music/detail.html', {'album':album})
+ 
+ 3. Add a url in urlpatterns
  
  
  ## static files:  used to work with css, javascript
