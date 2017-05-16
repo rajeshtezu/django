@@ -1,0 +1,316 @@
+#Creating virtual environment to seperate each project: All the installed packages will be isolated from softwares installed in the system, 
+													   ie; this folder will act as root folder for this virtual system
+--------------------------------------------------------
+-> $sudo pip install virtualenv 
+-> $virtualenv --no-site-packages djangoProjectVirtualEnv  ---> creating folder for virtual environment, here we are creating folder: djangoProjectVirtualEnv
+-> $source djangoProjectVirtualEnv/bin/activate  ---> Now activating that folder for being a virtual environment
+
+
+#Creating Django project:
+------------------------
+
+-> $django-admin startproject firstDjangoSite  ---> it will create django project folder(firstDjangoSite) with project structure
+-> $python manage.py runserver  ---> it will start the web server. check: localhost:8000
+
+#Coming out of virtual environment:
+----------------------------------
+(djangoProjectVirtualEnv) [rajesh@Rajesh firstDjangoSite]$deactivate  ---> it will simply end the virtual environment
+
+
+#Creating an app inside Project: app can be think of as a python package which could be included in our project. 
+[ie; Adding web pages to the project, contains: __init__.py  admin.py  apps.py  migrations  models.py  tests.py  views.py]
+--------------------------------------------
+
+-> $python manage.py startapp <appName>
+
+#Creating database if not created automatically:
+------------------------------------------------
+-> $python manage.py syncdb
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
+
+	$python manage.py migrate  ---> APPLY DATABASE CHANGES
+
+
+Models: We can think of it as blueprint of database
+---------------------------------------------------
+-> 	We need to create a class in "models.py" file which will inherit "models.Model" class and whatever variables we declare here, django will 
+	create corresponding table in database with the same columns name as variables name.
+	
+	Eg: class Album(models.Model):
+			artist = models.CharField(max_length=200)
+			album_title = models.CharField(max_length=300)
+			genre = models.CharField(max_length=100)
+			album_logo = models.CharField(max_length=1000)
+
+
+		class Song(models.Model):
+			album = models.ForeignKey(Album, on_delete=models.CASCADE)  # Django will create primary key by default for every table, and here album will refer
+			file_type = models.CharField(max_length=10)                 # to pk of table Album
+			song_title = models.CharField(max_length=250)
+
+	
+
+-> Making migration of created models' class/table to the database:
+-------------------------------------------------------------------
+ $python manage.py makemigrations <music/appName> --> it makes the changes in file, but migrate command actually runs the changes [see top of this page]
+
+-> check your migration:
+------------------------
+ $python manage.py sqlmigrate <music/appName> <0001/migrationId>
+ 
+-> To write database command [Database API]:
+--------------------------------------------
+ $python manage.py shell
+ >>>from music.models import Album, Song
+ >>>Album.objects.all()  #To check data available in table Album
+ <QuerySet []>
+ >>>a = Album(artist="Taylor Swift", album_title="Red", genre="Country", album_logo="img.jpg") #object will be stored in shell memory here
+ >>>a.save() #saving data into database
+ >>> a.artist
+ 'Taylor Swift'
+ >>> a.album_title
+ 'Red'
+ >>> a.id
+ 1
+ >>> a.pk   # django created primary key/id
+ 1
+ 
+ ------> Other method:
+ 	>>> b = Album()
+	>>> b.artist = "Myth"
+	>>> b.album_title = "High School"
+	>>> b.genre = "Punk"
+	>>> b.album_logo = "img.jpg"
+	>>> b.save()
+	>>> b.artist
+	'Myth'
+	>>> 
+
+>>>Album.objects.all() -> To check tables data
+>>>Album.objects.filter(id=2)  -> To check particular row of table with their corresponding id
+>>>Album.objects.filter(artist__startswith='Taylor')  -> It will display the row data whoes artist column will start with 'Taylor'
+
+ Note: Above mentioned all codes will be used in "views.py" file to interact with database
+ 
+ 
+## Admin interface:
+-------------------
+-> First create superuser
+	$python manage.py createsuperuser
+	
+## Register your models to admin interface:
+-------------------------------------------
+-> goto "admin.py" file of app and add :
+	
+	from models import Album
+	admin.site.register(Album)
+ 
+## How to set regular expression for string query and store it in a variable:
+-----------------------------------------------------------------------------
+	url(r'^(?P<var_name>[0-9]+)$', viewFunName, name="anyName"), 
+	
+	Note: same "var_name" should be used in view function argument to receive the value passed in url.
+ 
+ 
+## Connecting with database, fetching data and making link:
+-----------------------------------------------------------
+Eg:
+	def index(request):
+		all_album = Album.objects.all()  # Connecting with database
+		html = ''
+		for album in all_album:
+		    url = '/music/' + str(album.id) + '/'
+		    html += '<a href="'+ url +'"> '+ album.album_title + ' </a> <br/>'
+		return HttpResponse(html)
+	 
+	Note: we won't use above method 
+
+## Template in Django:
+----------------------
+ -> It is html file, used to separate html code from python code. python code are also allowd inside this file within "{% PYTHON CODE %}  {% END %}"
+ 	[ie; works like asp.net mvc application's "cshtml" page]
+ 	
+ 	steps to create template:
+ 	-------------------------
+ 	1. Create a directory with name "templates" inside your app, then create a subdirectory inside "templates" directory, then inside this subdirectory
+ 	   create your html file.
+ 	
+ 	2. Now go inside "views.py" of your app and do the following:
+
+ 		from django.template import loader      #To work with template
+		from music.models import Album
+ 
+		def index(request):
+			all_album = Album.objects.all()  # Connecting with database
+			template = loader.get_template('/music/index.html')
+			context = {
+				'all_album_key' : all_album,
+			}
+			return HttpResponse(template.render(context, request)) 
+		 
+ 
+ 	3. Now inside your html file in template, do the following:
+ 	
+ 		{% if all_album_key %}
+			<ul>
+				{% for album in all_album_key %}
+				<li><a href="/music/{{ album.id }}/"> {{ album.album_title }} </a></li>
+				{%  endfor %}
+			</ul>
+		{% else %}
+			<h3>You don't have any albums </h3>
+		{% endif %}
+ 
+ 
+ ## Using "render" function instead of loder and HttpResponse:
+ ------------------------------------------------------------
+	-> It is built on top of HttpResponse, so it is easy to use.
+	Eg:
+		from django.shortcuts import render
+		from .models import Album
+		
+		def index(request):
+			all_albums = Album.objects.all()
+			context = {'all_albus' : all_albums}
+			return render(request, 'music/index.html', context)
+	
+	
+## Http404: Useful when requested file/data does not exist
+-----------
+	Eg:
+		from django.http import Http404
+		from django.shortcuts import render
+		from .models import Album
+ 
+		def index(request):
+			all_albums = Album.objects.all()
+			return render(request, 'music/index.html', {'all_albus' : all_albums})
+ 
+		def detail(request, album_id):
+			try:
+				album = Album.objects.get(pk = album_id)   #here we are getting only row having pk=album_id
+			except Album.DoesNotExist:
+				raise Http404("Album does not exist")
+			return render(request, 'music/detail.html', {'album' : album})
+
+			
+			
+## get_object_or_404: It will save line of code in above example. ie; we won't need try-except for this
+---------------------
+	Ex:
+		from django.shortcuts import render, get_object_or_404
+		from .models import Album
+		
+		def detail(request):
+			album = get_object_or_404(Album, pk=album_id)
+			return render(request, 'music/detail.html', {'album' : album})
+			
+## Object set: To work with object set use "className_set", where className should be in lower case
+--------------
+	Eg:
+		from music.models import Album, Song
+		
+		album1 = Album.objects.get(pk = 1)
+		print album1.song_set.all()
+		
+		album1.song_set.create(song_title = 'I love bacon', file_type = 'mp3')	#We can add songs in the album using this
+		album1.song_set.create(song_title = 'something happening', file_type = 'mp3')
+		album1.song_set.create(song_title = 'all songs are good', file_type = 'mp3')
+				
+		album1.song_set.count()		#It will return total number of songs in that album		
+				
+		
+ ## Making URLs dynamic:
+ -----------------------
+	Eg:
+		FileName: index.html
+		--------------------
+		<a href="{% url 'name_arg_of_url_in_urls.py' <album.id/changingValue> %}"> {{ album.album_title }} </a>
+ 
+ 
+## namespace:
+-------------
+	-> If we have same name used in more than one app's url and we want to use that name in our template, so to
+	   avoid confusion we use namespace.
+	   
+	   Eg:
+		fileName: music/urls.py
+		-----------------------
+			app_name = 'music'
+			urlpatterns = [
+				url(r'^...$', views.detail, name='detail'),
+			]
+		
+		fileName: index.html
+		--------------------
+			<a href="{% url 'music:detail' album.id %}"> {{ album.album_title }} </a>
+			
+			Note: here in "music:detail", we are using "music" namespace
+ 
+
+ ## Simple Form:
+ ---------------
+ 	
+ 
+ 
+ ## static files:  used to work with css, javascript
+ 
+ 
+ 
+ ## Generic view: it makes working with view so simple. it's awesome <3
+ ----------------
+	-> In every website we have two things common and that is one page shows us a "list of things/links" and every single "link" 
+	   takes us to it's detail page. And generic view made it very easy.
+	   
+	Steps to work with generic view:
+	--------------------------------
+	1. Include "generic" module in your "views.py" file
+	     from django.views import generic
+	
+	2. Write generic views which is nothing but a python class which inherits generic.ListView/generic.DetailView like classes
+		
+		from .models import Album
+	
+		class IndexView(generic.ListView):		-----> view made to display list
+			template_name = 'music/index.html'  -----> tells which template you want to return
+			context_object_name = 'all_albums'	-----> sets the context/dictionary/object name [which contains database data], default name would be "object_list"
+			
+			def get_queryset(self):				-----> this function actually fetch data from database
+				return Album.object.all()
+ 
+		
+		class DetailView(generic.DetailView):	-----> view to display details of list, so it needs pk of every list item
+			model = Album						-----> tells we are using model Album
+			template_name = 'music/detal.html'	-----> now sets the template to be returned
+			
+	
+	3. Now inside "urls.py" write urlpatterns list like this:
+		
+		urlpatterns = [
+			url(r'^$', views.IndexView.as_view(), name='index'),		-----> here "as_view()" is used to use the class as view
+			url(r'^(?P<pk>[0-9]+)/$', views.DetailView.as_view(), name='detail'),   ----> pk is needed to display detail of list, 
+		]
+
+	Note: How does url variable work in django?
+		http://stackoverflow.com/questions/150505/capturing-url-parameters-in-request-get
+	
+	Note: In above urlpatterns, url with "pk" as variable: here variable pk is used because in our view class that var_name is 
+		  used implicitly.[I am not sure how it works but i guess this could be the reason].
+ 
+ 
+ 
+ ## Model forms:
+ ---------------
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
