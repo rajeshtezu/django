@@ -297,8 +297,49 @@ Eg:
  3. Add a url in urlpatterns
  
  
- ## static files:  used to work with css, javascript
+## static files:  used to work with css, javascript
+ ----------------
+	Steps to work with static files:
+	
+	1. create a directory named "static" inside your app, then create subdirectroy or files inside it.
+		Eg:
+			music[appName] > static > music > images
+			music[appName] > static > music > style.css
+	
+	2. Now include files in static directory to your template[html file]
+		Eg: 
+			{% load staticfiles %}	-----> it loads the path to static files, after that we can include files inside it
+			<link rel="stylesheet" type="text/css" href="{% static 'music/style.css' %}" />	----> static in href used for relative path	
  
+  	
+ ## Base template:
+ -----------------
+	-> it is same as master page in asp.net
+	Steps to work with base template:
+	
+		1. create a base template html file and do the following
+			
+			file name: base.html
+			--------------------
+			<title> {% block title/block_name %} viberr {% endblock %} </title>	----> added so that for every webpage we can change this
+			
+			...content common for every webpage...
+			{% block <block_name> %}
+			{% endblock %}
+		
+		2. Now navigate into other webpage in which you want to include this base template
+ 
+			file name: detail.html
+			----------------------
+			{% extends 'music/base.html' %}
+			
+			{% block title/block_name %} Album {% endblock %}
+			
+			{% block <block_name> %}	----> whatever we write inside this will reside into block of base.html
+				...your code for this page...
+			{% endblock %}
+ 
+		Note: block name should be same as in base.html
  
  
  ## Generic view: it makes working with view so simple. it's awesome <3
