@@ -463,6 +463,64 @@ Eg:
  
  
  
+ 	# Update view and delete view:
+ 	------------------------------
+ 	
+ 		file name: views.py
+ 		-------------------
+ 		from django.views.generic.edit import CreateView, UpdateView, DeleteView
+ 		from django.core.urlresolvers import reverse_lazy
+ 		
+ 		class AlbumUpdate(UpdateView):
+ 			model = Album
+ 			fields = ['artist', 'album_title', 'genre', 'album_logo']	--> will display the form and populate previous value
+ 		
+ 		class AlbumDelete(DeleteView):
+ 			model = Album
+ 			success_url = reverse_lazy('music:index')	---> after successful deletion of album object where we want to redirect
+ 		
+ 		
+ 		file name: urls.py
+ 		------------------
+ 		
+ 		# /music/album/2/
+ 		url(r'album/(?P<pk>[0-9]+)/$', views.AlbumUpdate.as_view(), name='album-update'),
+ 		
+ 		# /music/album/2/delete
+ 		url(r'album/(?P<pk>[0-9]+)/delete/$', views.AlbumDelete.as_view(), name='album-delete'),
+ 		
+ 		Now go to template and configure these url with update and delete button
+ 		
+
+## File Upload:
+---------------
+
+	file name: models.py
+	--------------------
+	
+	class Album(models.Model):
+		album_logo = models.FileField()
+		
+	-> Now go inside "settings.py" and add these lines at bottom
+	
+		MEDIA_ROOT = os.path.join(BASE_DIR, 'media')	---> setting path for the images to be stored, actual direcotory on our computer
+		MEDIA_URL = '/media/'	---> relative url what browser understand for accessing file over http 
+ 	
+ 
+ 	-> Now inside "appName/urls.py" add these
+ 	
+ 		from django.conf import settings
+ 		from django.conf.urls.static import static
+ 		
+ 		if settings.DEBUG:
+ 			urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+ 			urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+ 			
+ 	-> Now go to template and change "src" of <img> like 
+ 		<img src="{{ album.album_logo.url }}">	---> "ulr" appended will tell the file path of actual image
+ 	
+ 
+ 
  
  
  
