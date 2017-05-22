@@ -6,6 +6,19 @@
 -> $source djangoProjectVirtualEnv/bin/activate  ---> Now activating that folder for being a virtual environment
 
 
+
+
+
+##if we compare django MVT with MVC, mapping would be like this:
+
+django mvt		MVC
+-----------	 -----------
+view ------->  controller
+model ------>  model
+template --->  view
+
+
+
 #Creating Django project:
 ------------------------
 
@@ -386,6 +399,53 @@ Eg:
  
  ## Model forms:
  ---------------
+	-> Helps to speedup development by doing the following:
+		--> Generating the actual html code for the forms
+		--> Taking care of basic form validation
+		--> Take care of saving that data to database
+		
+	Steps to work with model form:
+	
+	1. Include following module in "models.py":
+		from django.core.urlresolvers imoprt reverse
+	
+	2. Inside model class ['Album' in this case] include the "get_absolute_url()" function
+	
+		class Album(models.Model):
+			...table columns...
+			
+			def get_absolute_url(self):		# this method is used for the interaction of form with database
+				return reverse('<view_name/music:detail>', kwargs={'pk':self.pk})	#->we are using pk here because our detail page need this
+																					#-> whenever we add an album to the database through form,
+																					#	after adding that this function will redirect to detail 
+																					#	page with the pk of created album
+			def __str__(self):
+				return self.album_title + ' - ' + self.artist
+
+	3. Now goto "views.py" and create a view class for "form view" which will create new object
+	
+		from django.views.generic.edit import CreateView, UpdateView, DeleteView
+		
+		class AlbumCreate(CreateView):		---> will work as insert of CRUD operation in asp.net
+			model = Album					---> what type of object we want to create
+			fields = ['artist', 'album_title', 'genre', 'album_logo']	---> what fields we are allowing to insert while create object
+	
+	4. Add the url of this view
+		url(r'album/add/$', views.AlbumCreate.as_view(), name='album-add')
+	
+		CONTINUE FROM TUTORIAL-31 
+	5. Now create a template that we can plug into
+		-> when we are using model form the default template name should be: <model's name>_form
+		   where model name should be in lower case
+		   Eg: album_form.html
+			------------------
+			
+			{% extends 'music/base.html' %}
+			
+			{% block body %}
+				<form >
+				
+			{% endblock %}
  
  
  
