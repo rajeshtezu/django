@@ -429,23 +429,37 @@ Eg:
 		class AlbumCreate(CreateView):		---> will work as insert of CRUD operation in asp.net
 			model = Album					---> what type of object we want to create
 			fields = ['artist', 'album_title', 'genre', 'album_logo']	---> what fields we are allowing to insert while create object
+		
+		Note : here we don't need to specify template name. The default template name will be <model's name>_form.html ie; "albumcreate_form.html"
 	
 	4. Add the url of this view
 		url(r'album/add/$', views.AlbumCreate.as_view(), name='album-add')
 	
 		CONTINUE FROM TUTORIAL-31 
-	5. Now create a template that we can plug into
-		-> when we are using model form the default template name should be: <model's name>_form
+	5. Now create a template that we can plug into our view
+		-> when we are using model form the default template name should be: <model's name>_form.html
 		   where model name should be in lower case
+		   
 		   Eg: album_form.html
 			------------------
 			
 			{% extends 'music/base.html' %}
 			
 			{% block body %}
-				<form >
-				
+				<form action="" method="post" enctype="multipart/form-data">
+				{% csrf_token %}
+				{% include 'music/form-template.html' %}	---> we are including a template which will display the form with label and input field
+				<input type="submit" value="Submit" /> 
 			{% endblock %}
+			
+			
+			file name: form-template.html
+			-----------------------------
+			{% for field in form %}
+				<div> {{field.errors}} </div>
+				<label> {{ field.label_tag }} </label>
+				<div> {{ field }} </div>  ----> this will become text_field/dropdown or any input field accordig to requirement
+			{% endfor %}
  
  
  
